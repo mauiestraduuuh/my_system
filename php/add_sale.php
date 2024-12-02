@@ -1,5 +1,4 @@
 <?php
-// add_sale.php
 
 include('db_connection.php');
 session_start();
@@ -8,7 +7,6 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Your form handling code here
 ?>
 
 <!DOCTYPE html>
