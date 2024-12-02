@@ -1,25 +1,12 @@
 <?php
+
 include('db_connection.php');
-
-// Check if the form is submitted to add a new permit
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $permit_name = $_POST['permit_name'];
-    $issue_date = $_POST['issue_date'];
-    $expiry_date = $_POST['expiry_date'];
-
-    // Insert the permit into the database
-    $sql = "INSERT INTO permits (permit_name, issue_date, expiry_date)
-            VALUES ('$permit_name', '$issue_date', '$expiry_date')";
-
-    if (mysqli_query($conn, $sql)) {
-        echo "New permit added successfully!";
-    } else {
-        echo "Error: " . $sql . "<br>" . mysqli_error($conn);
-    }
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit;
 }
 
-// Close the database connection
-mysqli_close($conn);
 ?>
 
 <!DOCTYPE html>
@@ -28,23 +15,66 @@ mysqli_close($conn);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Permit</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Bahnschrift Condensed', sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            color: #6A0DAD; 
+            font-size: 2.5em;
+            margin-top: 20px;
+        }
+
+        .form-container {
+            width: 80%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container input,
+        .form-container button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .form-container button {
+            background-color: #6A0DAD; 
+            color: white;
+            border: none;
+        }
+
+        .form-container button:hover {
+            background-color: #5c0e9f; 
+        }
+    </style>
 </head>
 <body>
     <h1>Add Permit</h1>
-    <form method="POST" action="">
-        <label for="permit_name">Permit Name:</label>
-        <input type="text" id="permit_name" name="permit_name" required><br><br>
-        
-        <label for="issue_date">Issue Date:</label>
-        <input type="date" id="issue_date" name="issue_date" required><br><br>
 
-        <label for="expiry_date">Expiry Date:</label>
-        <input type="date" id="expiry_date" name="expiry_date" required><br><br>
+    <div class="form-container">
+        <form method="POST" action="add_permit_action.php">
+            <label for="permit_name">Permit Name</label>
+            <input type="text" id="permit_name" name="permit_name" required>
 
-        <input type="submit" value="Add Permit">
-    </form>
-    
-    <br><br>
-    <a href="view_permits.php">View Permits</a> <!-- Link to view permits -->
+            <label for="issue_date">Issue Date</label>
+            <input type="date" id="issue_date" name="issue_date" required>
+
+            <label for="expiry_date">Expiry Date</label>
+            <input type="date" id="expiry_date" name="expiry_date" required>
+
+            <button type="submit">Add Permit</button>
+        </form>
+    </div>
 </body>
 </html>
