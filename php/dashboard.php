@@ -146,6 +146,8 @@ if ($result_sales_time->num_rows > 0) {
         <a href="../php/add_permit.php" class="btn">Add Permit</a>
         <a href="../php/view_products.php" class="btn">View Inventory</a>
         <a href="../php/add_product.php" class="btn">Add Product</a>
+        <a href="../php/view_categories.php" class="btn">View Categories</a>
+        <a href="../php/add_category.php" class="btn">Add Category</a>
         <a href="../php/view_sales.php" class="btn">View Sales</a>
         <a href="../php/add_sale.php" class="btn">Add Sale</a>
         <a href="../php/logout.php" class="logout">Logout</a>

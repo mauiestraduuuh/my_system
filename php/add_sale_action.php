@@ -1,36 +1,43 @@
 <?php
 include('db_connection.php');
 session_start();
-
-// Check if the user is logged in
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit;
 }
 
-// Check if the form is submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $product_name = $_POST['product_name'];
-    $sales_date = $_POST['sales_date'];
-    $price = $_POST['price'];
-    $quantity = $_POST['quantity'];
+// Get form data
+$product_name = $_POST['product_name'];
+$quantity = $_POST['quantity'];
+$total_amount = $_POST['total_amount'];
+$sales_date = $_POST['sales_date'];
+$category = $_POST['category'];
+$data_inserted_by = $_POST['data_inserted_by'];
+$password = $_POST['password'];
 
-    // Calculate total amount
-    $total_amount = $price * $quantity;
+// Password confirmation
+$stored_password = 'your-password'; // Replace with actual stored password
+if ($password != $stored_password) {
+    die("Password confirmation failed.");
+}
 
-    // Insert data into the database
-    $sql = "INSERT INTO sales (product_name, sales_date, price, quantity, total_amount) 
-            VALUES ('$product_name', '$sales_date', '$price', '$quantity', '$total_amount')";
+// Fetch the unit price from the product table
+$sql = "SELECT default_price FROM products WHERE product_name = '$product_name'";
+$result = $conn->query($sql);
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $unit_price = $row['default_price'];
 
-    if ($conn->query($sql) === TRUE) {
-        // Redirect back to a success page or dashboard
-        header("Location: dashboard.php?message=Sale+added+successfully");
-        exit;
+    // Insert sale into the sales table
+    $sql_insert = "INSERT INTO sales (product_name, quantity, total_amount, sales_date, category, unit_price, data_inserted_by) 
+                   VALUES ('$product_name', '$quantity', '$total_amount', '$sales_date', '$category', '$unit_price', '$data_inserted_by')";
+    if ($conn->query($sql_insert) === TRUE) {
+        echo "Sale added successfully.";
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        echo "Error: " . $conn->error;
     }
 } else {
-    echo "Invalid request.";
+    echo "Product not found.";
 }
 
 $conn->close();
