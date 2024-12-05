@@ -1,5 +1,13 @@
 <?php
+session_start(); // Start the session to check login status
+
 include('db_connection.php');
+
+// Check if the logged-in user is the owner
+if ($_SESSION['role'] !== 'Owner') {
+    echo "<script>alert('Access Denied. Only the Owner can view the sales list.'); window.location.href='dashboard.php';</script>";
+    exit;
+}
 
 // Fetch data from the sales table
 $sql = "SELECT * FROM sales";
@@ -43,6 +51,7 @@ if ($result->num_rows > 0) {
     </thead>
     <tbody>";
 
+    // Loop through all sales records and display them
     while ($row = $result->fetch_assoc()) {
         $sale_id = $row['sale_id'];
         $product_name = $row['product_name'];

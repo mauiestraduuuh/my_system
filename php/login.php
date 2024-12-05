@@ -1,23 +1,37 @@
 <?php
-
 session_start();
+include('db_connection.php'); // Ensure this file connects to your database
 
+// Redirect logged-in users to the dashboard
 if (isset($_SESSION['username'])) {
     header("Location: dashboard.php");
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = 'admin';
-    $password = 'password123';
-
-    $input_username = $_POST['username'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input_username = mysqli_real_escape_string($conn, $_POST['username']);
     $input_password = $_POST['password'];
 
-    if ($input_username == $username && $input_password == $password) {
-        $_SESSION['username'] = $input_username;
-        header("Location: dashboard.php");
-        exit;
+    // Query to check if the user exists
+    $sql = "SELECT * FROM users WHERE username = '$input_username'";
+    $result = mysqli_query($conn, $sql);
+
+    if (mysqli_num_rows($result) === 1) {
+        $user = mysqli_fetch_assoc($result);
+
+        // Verify password
+        if (hash('sha256', $input_password) === $user['password_hash']) {
+            // Set session variables
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
+
+            // Redirect to dashboard
+            header("Location: dashboard.php");
+            exit;
+        } else {
+            $error = "Invalid username or password!";
+        }
     } else {
         $error = "Invalid username or password!";
     }
@@ -32,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Login</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Global Styles */
+        /* Preserving your design */
         body {
             font-family: Arial, sans-serif;
             background-color: #f7f7f7;
@@ -59,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-bottom: 20px;
         }
 
-        /* Input Styles */
         input[type="text"], input[type="password"] {
             width: 100%;
             padding: 12px;
@@ -75,7 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             outline: none;
         }
 
-        /* Button Styles */
         input[type="submit"] {
             width: 100%;
             padding: 14px;
@@ -91,21 +103,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             background-color: #45a049;
         }
 
-        /* Error Message */
         .error {
             color: red;
             text-align: center;
             margin-bottom: 15px;
         }
 
-        /* Footer */
         .footer {
             text-align: center;
             margin-top: 20px;
             font-size: 14px;
             color: #888;
         }
-
     </style>
 </head>
 <body>
@@ -125,5 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             <input type="submit" value="Login">
         </form>
+    </div>
 </body>
 </html>

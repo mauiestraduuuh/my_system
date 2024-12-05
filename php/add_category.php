@@ -1,15 +1,22 @@
 <?php
 include('db_connection.php');
 session_start();
+
+// Check if the user is logged in
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit;
 }
 
+// Handle the form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Retrieve and sanitize the input
     $category_name = mysqli_real_escape_string($conn, $_POST['category_name']);
 
-    $sql = "INSERT INTO categories (name) VALUES ('$category_name')";
+    // Correct column name in the query based on the database schema
+    $sql = "INSERT INTO categories (category_name) VALUES ('$category_name')";
+
+    // Execute the query and provide feedback
     if (mysqli_query($conn, $sql)) {
         echo "<p>Category added successfully!</p>";
     } else {
@@ -71,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <h1>Add Category</h1>
 
     <div class="form-container">
-        <form method="POST" action="add_categories.php">
+        <form method="POST" action="add_category.php">
             <label for="category_name">Category Name</label>
             <input type="text" id="category_name" name="category_name" required>
 

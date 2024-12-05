@@ -18,13 +18,14 @@ $expiringSoon = $row['expiring_soon'];
 $expired = $row['expired'];
 
 $sql_inventory = "SELECT 
-                    SUM(CASE WHEN quantity > 0 THEN 1 ELSE 0 END) AS in_stock,
-                    SUM(CASE WHEN quantity = 0 THEN 1 ELSE 0 END) AS out_of_stock
-                  FROM inventory";
+                    SUM(CASE WHEN stock_quantity > 0 THEN 1 ELSE 0 END) AS in_stock,
+                    SUM(CASE WHEN stock_quantity = 0 THEN 1 ELSE 0 END) AS out_of_stock
+                  FROM products";
 $result_inventory = $conn->query($sql_inventory);
 $row_inventory = $result_inventory->fetch_assoc();
-$inStock = $row_inventory['in_stock'];
-$outOfStock = $row_inventory['out_of_stock'];
+$inStock = $row_inventory['in_stock'] ?? 0;
+$outOfStock = $row_inventory['out_of_stock'] ?? 0;
+
 
 $sql_sales = "SELECT 
                 SUM(total_amount) AS total_sales,
@@ -136,6 +137,19 @@ if ($result_sales_time->num_rows > 0) {
             color: #6A0DAD;
             margin-bottom: 20px;
         }
+
+        #customDates {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        #customDates input {
+            margin: 5px;
+            padding: 5px;
+            font-size: 1em;
+        }
+
     </style>
 </head>
 <body>
@@ -145,11 +159,10 @@ if ($result_sales_time->num_rows > 0) {
         <a href="../php/view_permits.php" class="btn">View Permits</a>
         <a href="../php/add_permit.php" class="btn">Add Permit</a>
         <a href="../php/view_products.php" class="btn">View Inventory</a>
-        <a href="../php/add_product.php" class="btn">Add Product</a>
-        <a href="../php/view_categories.php" class="btn">View Categories</a>
-        <a href="../php/add_category.php" class="btn">Add Category</a>
         <a href="../php/view_sales.php" class="btn">View Sales</a>
         <a href="../php/add_sale.php" class="btn">Add Sale</a>
+        <a href="../php/restock_inventory.php" class="btn">Restock</a>
+        <a href="../php/transaction.php" class="btn">Transaction History</a>
         <a href="../php/logout.php" class="logout">Logout</a>
     </div>
 
@@ -170,6 +183,24 @@ if ($result_sales_time->num_rows > 0) {
             <div class="expired">Out of Stock: <?php echo $outOfStock; ?></div>
         </div>
         <canvas id="inventoryChart"></canvas>
+    </div>
+
+    <div class="dashboard-buttons">
+        <label for="timeRange">Select Time Range:</label>
+        <select id="timeRange" onchange="updateSalesChart()">
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+            <option value="custom">Custom Date Range</option>
+        </select>
+    </div>
+
+    <div id="customDates">
+    <label for="startDate">Start Date:</label>
+    <input type="date" id="startDate" name="startDate" required>
+    <label for="endDate">End Date:</label>
+    <input type="date" id="endDate" name="endDate" required>
+    <button onclick="applyCustomDateRange()">Apply</button>
     </div>
 
     <div class="chart-container">
@@ -214,18 +245,19 @@ if ($result_sales_time->num_rows > 0) {
         });
 
         var ctxSalesTime = document.getElementById('salesTimeChart').getContext('2d');
-        var salesTimeChart = new Chart(ctxSalesTime, {
-            type: 'line',
-            data: {
-                labels: <?php echo json_encode($daily_sales_dates); ?>,
-                datasets: [{
-                    label: 'Daily Sales',
-                    data: <?php echo json_encode($daily_sales); ?>,
-                    borderColor: '#6A0DAD',
-                    fill: false
-                }]
-            }
-        });
+var salesTimeChart = new Chart(ctxSalesTime, {
+    type: 'line',
+    data: {
+        labels: <?php echo json_encode($daily_sales_dates); ?>,
+        datasets: [{
+            label: 'Daily Sales',
+            data: <?php echo json_encode($daily_sales); ?>,
+            borderColor: '#6A0DAD',
+            fill: false
+        }]
+    }
+});
+
 
         var ctxSalesProduct = document.getElementById('salesProductChart').getContext('2d');
         var salesProductChart = new Chart(ctxSalesProduct, {
@@ -235,12 +267,60 @@ if ($result_sales_time->num_rows > 0) {
                 datasets: [{
                     label: 'Best Selling Products',
                     data: <?php echo json_encode($product_sales); ?>,
-                    backgroundColor: '#FFEB3B',
-                    borderColor: '#F44336',
-                    borderWidth: 1
+                    backgroundColor: '#6A0DAD'
                 }]
             }
         });
+
+        function updateSalesChart() {
+    var timeRange = document.getElementById('timeRange').value;
+    var customDates = document.getElementById('customDates');
+    var startDate = document.getElementById('startDate').value;
+    var endDate = document.getElementById('endDate').value;
+
+    if (timeRange === 'custom') {
+        customDates.style.display = 'block';
+        if (startDate && endDate) {
+            // Send AJAX request to fetch data for the custom date range
+            fetch(`get_sales_data.php?start_date=${startDate}&end_date=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update chart with new data
+                    salesTimeChart.data.labels = data.dates;
+                    salesTimeChart.data.datasets[0].data = data.sales;
+                    salesTimeChart.update();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        } else {
+            alert('Please select both start and end dates.');
+        }
+    } else {
+        customDates.style.display = 'none';
+        // Implement logic for predefined ranges (Today, Last 7 Days, etc.)
+    }
+}
+
+
+window.onload = function () {
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+        };
+
+function applyCustomDateRange() {
+    var startDate = document.getElementById('startDate').value;
+    var endDate = document.getElementById('endDate').value;
+
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates.');
+        return;
+    }
+
+    // Example: Pass custom dates via AJAX or update chart data
+    console.log(`Selected range: ${startDate} to ${endDate}`);
+    // Additional code to update chart based on the custom date range
+}
+
     </script>
 </body>
 </html>

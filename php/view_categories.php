@@ -2,7 +2,7 @@
 include('db_connection.php');
 
 // Fetch data from the categories table
-$sql = "SELECT * FROM categories";
+$sql = "SELECT category_id, category_name FROM categories"; // Use actual column names from your database
 $result = mysqli_query($conn, $sql);
 
 echo "<h2>Categories List</h2>";
@@ -41,13 +41,14 @@ if (mysqli_num_rows($result) > 0) {
     <tbody>";
 
     while ($row = mysqli_fetch_assoc($result)) {
-        $category_id = $row['id'];
-        $category_name = $row['name'];
+        // Access column names based on the actual database schema
+        $category_id = $row['category_id'];
+        $category_name = $row['category_name'];
 
         echo "<tr>
-        <td>$category_id</td>
-        <td>$category_name</td>
-        <td><a href='delete_category.php?category_id=$category_id' onclick=\"return confirm('Are you sure you want to delete this category?');\">Delete</a></td>
+        <td>" . htmlspecialchars($category_id) . "</td>
+        <td>" . htmlspecialchars($category_name) . "</td>
+        <td><a href='delete_category.php?category_id=" . htmlspecialchars($category_id) . "' onclick=\"return confirm('Are you sure you want to delete this category?');\">Delete</a></td>
         </tr>";
     }
 
