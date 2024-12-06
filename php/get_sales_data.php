@@ -3,6 +3,23 @@ include('db_connection.php');
 
 $startDate = $_GET['start_date'] ?? null;
 $endDate = $_GET['end_date'] ?? null;
+$timeRange = $_GET['time_range'] ?? null;
+
+if ($timeRange) {
+    switch ($timeRange) {
+        case 'today':
+            $startDate = $endDate = date('Y-m-d');
+            break;
+        case 'week':
+            $startDate = date('Y-m-d', strtotime('-7 days'));
+            $endDate = date('Y-m-d');
+            break;
+        case 'month':
+            $startDate = date('Y-m-d', strtotime('-30 days'));
+            $endDate = date('Y-m-d');
+            break;
+    }
+}
 
 if ($startDate && $endDate) {
     $sql = "SELECT 
@@ -29,5 +46,5 @@ if ($startDate && $endDate) {
 } else {
     echo json_encode(['error' => 'Invalid date range']);
 }
+
 $conn->close();
-?>

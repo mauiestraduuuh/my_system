@@ -200,8 +200,9 @@ if ($result_sales_time->num_rows > 0) {
     <input type="date" id="startDate" name="startDate" required>
     <label for="endDate">End Date:</label>
     <input type="date" id="endDate" name="endDate" required>
-    <button onclick="applyCustomDateRange()">Apply</button>
+    <button type="button" onclick="applyCustomDateRange()">Apply</button>
     </div>
+
 
     <div class="chart-container">
         <h3>Sales Over Time (Last 30 Days)</h3>
@@ -275,37 +276,22 @@ var salesTimeChart = new Chart(ctxSalesTime, {
         function updateSalesChart() {
     var timeRange = document.getElementById('timeRange').value;
     var customDates = document.getElementById('customDates');
-    var startDate = document.getElementById('startDate').value;
-    var endDate = document.getElementById('endDate').value;
 
     if (timeRange === 'custom') {
         customDates.style.display = 'block';
-        if (startDate && endDate) {
-            // Send AJAX request to fetch data for the custom date range
-            fetch(`get_sales_data.php?start_date=${startDate}&end_date=${endDate}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Update chart with new data
-                    salesTimeChart.data.labels = data.dates;
-                    salesTimeChart.data.datasets[0].data = data.sales;
-                    salesTimeChart.update();
-                })
-                .catch(error => console.error('Error fetching data:', error));
-        } else {
-            alert('Please select both start and end dates.');
-        }
     } else {
         customDates.style.display = 'none';
-        // Implement logic for predefined ranges (Today, Last 7 Days, etc.)
+        // Handle predefined ranges (e.g., Today, Last 7 Days, Last 30 Days)
+        fetch(`get_sales_data.php?time_range=${timeRange}`)
+            .then(response => response.json())
+            .then(data => {
+                salesTimeChart.data.labels = data.dates;
+                salesTimeChart.data.datasets[0].data = data.sales;
+                salesTimeChart.update();
+            })
+            .catch(error => console.error('Error fetching data:', error));
     }
 }
-
-
-window.onload = function () {
-            var today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = today;
-            document.getElementById('endDate').value = today;
-        };
 
 function applyCustomDateRange() {
     var startDate = document.getElementById('startDate').value;
@@ -316,10 +302,29 @@ function applyCustomDateRange() {
         return;
     }
 
-    // Example: Pass custom dates via AJAX or update chart data
-    console.log(`Selected range: ${startDate} to ${endDate}`);
-    // Additional code to update chart based on the custom date range
+    fetch(`get_sales_data.php?start_date=${startDate}&end_date=${endDate}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            salesTimeChart.data.labels = data.dates;
+            salesTimeChart.data.datasets[0].data = data.sales;
+            salesTimeChart.update();
+        })
+        .catch(error => console.error('Error fetching custom date range data:', error));
 }
+
+window.onload = function () {
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value = today;
+
+    // Ensure custom dates are hidden initially
+    document.getElementById('customDates').style.display = 'none';
+};
 
     </script>
 </body>
