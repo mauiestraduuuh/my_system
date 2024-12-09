@@ -7,15 +7,54 @@ if (!isset($_SESSION['role'])) {
     exit;
 }
 
-// Only allow access if the user is the Owner
 if ($_SESSION['role'] !== 'Owner') {
-    echo "<script>
-        alert('Access Denied: Only the Owner can view transactions.');
-        window.location.href = 'dashboard.php';
-    </script>";
+    echo "
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style='
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                '>
+                    <div style='
+                        background-color: white;
+                        padding: 20px 30px;
+                        border-radius: 10px;
+                        text-align: center;
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                    '>
+                        <h2 style='color: #6a2e9d; font-family: Bahnschrift Condensed;'>Access Denied</h2>
+                        <p style='font-size: 16px; color: #333;'>Only the <strong>Owner</strong> can view permits.</p>
+                        <button onclick='window.location.href=\"dashboard.php\"' style='
+                            margin-top: 10px;
+                            padding: 10px 20px;
+                            background-color: #45a049;
+                            color: white;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-size: 16px;
+                        '>
+                            Return to Dashboard
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        });
+    </script>
+    ";
     exit;
 }
-
 // Database connection
 include('db_connection.php');
 

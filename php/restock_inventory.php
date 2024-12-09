@@ -1,6 +1,9 @@
 <?php
 include('db_connection.php');
 
+// Check if an update was successful
+$update_success = isset($_GET['update']) && $_GET['update'] === 'success';
+
 // Fetch all categories
 $category_sql = "SELECT * FROM categories";
 $category_result = mysqli_query($conn, $category_sql);
@@ -9,175 +12,245 @@ $category_result = mysqli_query($conn, $category_sql);
 if (!$category_result) {
     die("Error in query: " . mysqli_error($conn));
 }
-
-echo "<h2>Restock Products List by Category</h2>";
-echo '<a href="dashboard.php">Return to Dashboard</a><br><br>';
-
-if (mysqli_num_rows($category_result) > 0) {
-    echo "<style>
-    body { font-family: 'Bahnschrift Condensed', sans-serif; }
-    .styled-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 20px 0;
-        font-size: 16px;
-        text-align: left;
-        background-color: #fff;
-    }
-    .styled-table thead { background-color: #6a2e9d; color: #fff; }
-    .styled-table th, .styled-table td { padding: 10px; border: 1px solid #ddd; }
-    .styled-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
-    .styled-table tbody tr:hover { background-color: #e0e0e0; }
-    .styled-table td a { color: #ff3385; text-decoration: none; }
-    .styled-table td a:hover { color: #4CAF50; }
-    h2 { color: #6a2e9d; font-size: 28px; text-align: center; margin-top: 20px; }
-    a { color: #4CAF50; font-size: 16px; text-decoration: none; margin: 10px; }
-    a:hover { color: #6a2e9d; }
-    .category-section { margin-top: 20px; }
-    .category-heading { background-color: #6a2e9d; color: white; padding: 10px; cursor: pointer; }
-    .category-products { display: none; padding: 10px; background-color: #f9f9f9; }
-    .quantity-buttons { display: flex; gap: 10px; align-items: center; }
-    .quantity-buttons button { padding: 5px 10px; font-size: 14px; cursor: pointer; }
-    .product-price input { width: 60px; }
-    </style>";
-
-    // Loop through each category
-    while ($category_row = mysqli_fetch_assoc($category_result)) {
-        $category_id = $category_row['category_id'];
-        $category_name = $category_row['category_name'];
-
-        // Fetch products for the current category
-        $product_sql = "SELECT * FROM products WHERE category_id = $category_id";
-        $product_result = mysqli_query($conn, $product_sql);
-
-        if (!$product_result) {
-            die("Error in query: " . mysqli_error($conn));
-        }
-
-        echo "<div class='category-section'>";
-        echo "<div class='category-heading' onclick='toggleCategory($category_id)'>$category_name</div>";
-        echo "<div class='category-products' id='category-products-$category_id'>";
-
-        if (mysqli_num_rows($product_result) > 0) {
-            echo "<table class='styled-table'>
-            <thead>
-                <tr>
-                    <th>Product ID</th>
-                    <th>Product Name</th>
-                    <th>Unit Price</th>
-                    <th>Stock Quantity</th>
-                    <th>Product Image</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>";
-
-            while ($product_row = mysqli_fetch_assoc($product_result)) {
-                $product_id = $product_row['product_id'];
-                $product_name = $product_row['product_name'];
-                $unit_price = $product_row['default_price'];
-                $stock_quantity = $product_row['stock_quantity'];
-                $image_path = $product_row['product_image']; // Fetch the product image column
-
-                // Display the image, or "No Image" if no image exists
-                $product_image = $image_path ? "<img src='../images/$image_path' alt='Product Image' width='50'>" : 'No Image';
-
-                echo "<tr>
-                <td>$product_id</td>
-                <td>$product_name</td>
-                <td><input class='product-price' type='number' value='$unit_price' min='0.01' step='0.01' data-product-id='$product_id'></td>
-                <td>
-                    <div class='quantity-buttons'>
-                        <button onclick=\"updateQuantity($product_id, 'increase')\">+</button>
-                        <span id='quantity-$product_id'>$stock_quantity</span>
-                        <button onclick=\"updateQuantity($product_id, 'decrease')\">-</button>
-                    </div>
-                </td>
-                <td>$product_image</td>
-                <td><a href='update_product.php?product_id=$product_id'>Update</a></td>
-                </tr>";
-            }
-
-            echo "</tbody></table>";
-        } else {
-            echo "<p>No products found in this category.</p>";
-        }
-
-        echo "</div></div>";
-    }
-} else {
-    echo "<p>No categories found.</p>";
-}
-
-mysqli_close($conn);
 ?>
 
-<script>
-// Function to toggle visibility of the products for each category
-function toggleCategory(categoryId) {
-    var products = document.getElementById('category-products-' + categoryId);
-    if (products.style.display === 'none' || products.style.display === '') {
-        products.style.display = 'block';
-    } else {
-        products.style.display = 'none';
-    }
-}
-
-// Function to update quantity (increase or decrease)
-function updateQuantity(productId, action) {
-    var currentQuantity = parseInt(document.getElementById('quantity-' + productId).innerText);
-    var newQuantity = (action === 'increase') ? currentQuantity + 1 : (currentQuantity > 0) ? currentQuantity - 1 : 0;
-
-    // Update the displayed quantity
-    document.getElementById('quantity-' + productId).innerText = newQuantity;
-
-    // Prompt the user to select who is entering the data
-    var insertedBy = prompt("Enter your name (Owner, Assistant_1, Assistant_2):");
-    if (insertedBy) {
-        // AJAX call to update the database
-        updateProductQuantity(productId, newQuantity, insertedBy);
-    }
-}
-
-// Function to update product quantity in the database
-function updateProductQuantity(productId, newQuantity, insertedBy) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "update_quantity.php", true);
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            console.log(xhr.responseText); // Log success response
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restock Inventory</title>
+    <style>
+        body {
+            font-family: 'Bahnschrift Condensed', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            color: #333;
         }
-    };
-    xhr.send("product_id=" + productId + "&quantity=" + newQuantity + "&inserted_by=" + insertedBy);
-}
 
-// Function to update product price (on change of value)
-document.querySelectorAll('.product-price').forEach(input => {
-    input.addEventListener('change', function() {
-        var productId = this.getAttribute('data-product-id');
-        var newPrice = parseFloat(this.value);
-        if (newPrice >= 0.01) {
-            // Prompt the user to select who is entering the data
-            var insertedBy = prompt("Enter your name (Owner, Assistant_1, Assistant_2):");
-            if (insertedBy) {
-                // Update the price in the database using AJAX
-                updateProductPrice(productId, newPrice, insertedBy);
-            }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
-    });
-});
 
-// Function to update product price in the database
-function updateProductPrice(productId, newPrice, insertedBy) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "update_price.php", true);
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            console.log(xhr.responseText); // Log success response
+        h2 {
+            color: #6a2e9d;
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 20px;
         }
-    };
-    xhr.send("product_id=" + productId + "&price=" + newPrice + "&inserted_by=" + insertedBy);
-}
-</script>
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        a:hover {
+            color: #6a2e9d;
+        }
+
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+            text-align: left;
+            background-color: #fff;
+        }
+
+        .styled-table thead {
+            background-color: #6a2e9d;
+            color: #fff;
+        }
+
+        .styled-table th,
+        .styled-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .styled-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .styled-table tbody tr:hover {
+            background-color: #e0e0e0;
+        }
+
+        .tooltip {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .tooltip:hover .tooltip-image {
+            display: block;
+        }
+
+        .tooltip-image {
+            display: none;
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 5px;
+            z-index: 10;
+            max-width: 120px;
+        }
+
+        .tooltip-image img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none; /* Default hidden */
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            width: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-content h3 {
+            color: #6a2e9d;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .modal-content button:hover {
+            background-color: #6a2e9d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Restock Products List by Category</h2>
+        <a href="dashboard.php">Return to Dashboard</a><br><br>
+
+        <?php if (mysqli_num_rows($category_result) > 0): ?>
+            <?php while ($category_row = mysqli_fetch_assoc($category_result)): ?>
+                <h3><?= htmlspecialchars($category_row['category_name']) ?></h3>
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Product Name</th>
+                            <th>Unit Price</th>
+                            <th>Stock Quantity</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $category_id = $category_row['category_id'];
+                        $product_sql = "SELECT * FROM products WHERE category_id = $category_id";
+                        $product_result = mysqli_query($conn, $product_sql);
+
+                        if (!$product_result) {
+                            die("Error in query: " . mysqli_error($conn));
+                        }
+
+                        if (mysqli_num_rows($product_result) > 0):
+                            while ($product_row = mysqli_fetch_assoc($product_result)):
+                                $product_id = $product_row['product_id'];
+                                $product_name = htmlspecialchars($product_row['product_name']);
+                                $unit_price = $product_row['default_price'];
+                                $stock_quantity = $product_row['stock_quantity'];
+                                $image_path = $product_row['product_image'];
+                                $product_image = $image_path ? "<img src='../images/$image_path' alt='$product_name'>" : "No Image";
+                        ?>
+                            <tr>
+                                <td><?= $product_id ?></td>
+                                <td class="tooltip">
+                                    <?= $product_name ?>
+                                    <?php if ($image_path): ?>
+                                        <div class="tooltip-image">
+                                            <img src="../images/<?= htmlspecialchars($image_path) ?>" alt="<?= $product_name ?>">
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <input class="product-price" type="number" value="<?= $unit_price ?>" min="0.01" step="0.01" data-product-id="<?= $product_id ?>">
+                                </td>
+                                <td>
+                                    <span id="quantity-<?= $product_id ?>"><?= $stock_quantity ?></span>
+                                </td>
+                                <td><a href="update_product.php?product_id=<?= $product_id ?>">Update</a></td>
+                            </tr>
+                        <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5">No products found in this category.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <p>No categories found.</p>
+        <?php endif; ?>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <h3>Update Successful!</h3>
+            <p>The product inventory has been successfully updated.</p>
+            <button onclick="redirectToProducts()">Go to Products List</button>
+        </div>
+    </div>
+
+    <script>
+        // Show modal if update was successful
+        const updateSuccess = <?php echo json_encode($update_success); ?>;
+        if (updateSuccess) {
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function redirectToProducts() {
+            window.location.href = 'view_products.php'; // Replace with the correct products list URL
+        }
+    </script>
+</body>
+</html>
+
+<?php mysqli_close($conn); ?>

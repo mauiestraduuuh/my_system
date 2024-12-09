@@ -5,7 +5,73 @@ include('db_connection.php');
 
 // Check if the logged-in user is the owner
 if ($_SESSION['role'] !== 'Owner') {
-    echo "<script>alert('Access Denied. Only the Owner can view the sales list.'); window.location.href='dashboard.php';</script>";
+    // Display a styled modal for Access Denied
+    echo "
+    <style>
+        body {
+            font-family: 'Bahnschrift Condensed', sans-serif;
+            background-color: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-content h2 {
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+        .modal-content p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            background: #6A0DAD;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .modal-content button:hover {
+            background: #5c0e9f;
+        }
+    </style>
+    <div class='modal'>
+        <div class='modal-content'>
+            <h2>Access Denied</h2>
+            <p>Only the Owner can view the sales list.</p>
+            <button onclick=\"window.location.href='dashboard.php'\">Return to Dashboard</button>
+        </div>
+    </div>";
     exit;
 }
 
