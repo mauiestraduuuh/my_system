@@ -10,51 +10,73 @@ if (!isset($_SESSION['role'])) {
 
 // Only allow access if the user is the Owner
 if ($_SESSION['role'] !== 'Owner') {
+    // Display a styled modal for Access Denied
     echo "
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.createElement('div');
-            modal.innerHTML = `
-                <div style='
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, 0.5);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                '>
-                    <div style='
-                        background-color: white;
-                        padding: 20px 30px;
-                        border-radius: 10px;
-                        text-align: center;
-                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-                    '>
-                        <h2 style='color: #6a2e9d; font-family: Bahnschrift Condensed;'>Access Denied</h2>
-                        <p style='font-size: 16px; color: #333;'>Only the <strong>Owner</strong> can view permits.</p>
-                        <button onclick='window.location.href=\"dashboard.php\"' style='
-                            margin-top: 10px;
-                            padding: 10px 20px;
-                            background-color: #45a049;
-                            color: white;
-                            border: none;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-size: 16px;
-                        '>
-                            Return to Dashboard
-                        </button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        });
-    </script>
-    ";
+    <style>
+        body {
+            font-family: 'Bahnschrift Condensed', sans-serif;
+            background-color: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-content h2 {
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+        .modal-content p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            background: #6A0DAD;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .modal-content button:hover {
+            background: #5c0e9f;
+        }
+    </style>
+    <div class='modal'>
+        <div class='modal-content'>
+            <h2>Access Denied</h2>
+            <p>Only the Owner can view the permits.</p>
+            <button onclick=\"window.location.href='dashboard.php'\">Return to Dashboard</button>
+        </div>
+    </div>";
     exit;
 }
 

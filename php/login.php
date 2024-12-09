@@ -21,10 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Verify password
         if (hash('sha256', $input_password) === $user['password_hash']) {
-            // Set session variables
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'];
+            // Set session variables after successful login
+            $_SESSION['user_id'] = $user['user_id'];  // Store user ID
+            $_SESSION['username'] = $user['username']; // Optionally store username
+            $_SESSION['role'] = $user['role']; // Store role
 
             // Redirect to dashboard
             header("Location: dashboard.php");

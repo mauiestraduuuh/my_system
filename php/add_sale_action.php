@@ -1,9 +1,12 @@
 <?php
 include('db_connection.php');
 session_start();
-if (!isset($_SESSION['username'])) {
+
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id']; // The logged-in user
+} else {
     header("Location: login.php");
-    exit;
+    exit();
 }
 
 $message = "";
@@ -31,13 +34,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $update_query = "UPDATE products SET stock_quantity = $new_stock_quantity WHERE product_id = $product_id";
                 if (mysqli_query($conn, $update_query)) {
                     $total_amount = $unit_price * $quantity_sold;
-                    $user_id = $_SESSION['user_id'];
+                    $user_id = $_SESSION['user_id']; // Use the session's user_id (logged-in user)
 
                     $insert_sale_query = "INSERT INTO sales (product_name, quantity, total_amount, sales_date) 
                                           VALUES ('$product_name', '$quantity_sold', '$total_amount', '$sales_date')";
                     if (mysqli_query($conn, $insert_sale_query)) {
-                        $transaction_query = "INSERT INTO transactions (transaction_type, product_id, quantity, total_amount, user_id) 
-                                              VALUES ('Sale', '$product_id', '$quantity_sold', '$total_amount', '$user_id')";
+                        // Insert the transaction with the logged-in user (inserted_by)
+                        $transaction_query = "INSERT INTO transactions (transaction_type, product_id, quantity, total_amount, user_id, transaction_date) 
+                                              VALUES ('Sale', '$product_id', '$quantity_sold', '$total_amount', '$user_id', NOW())";
                         if (mysqli_query($conn, $transaction_query)) {
                             $message = "Sale added and transaction recorded successfully!";
                             $success = true;
@@ -127,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="modal-content">
             <h2><?php echo $success ? 'Success!' : 'Error!'; ?></h2>
             <p><?php echo $message; ?></p>
-            <button class="btn-ok" onclick="window.location.href='view_products.php'">View Inventroy</button>
+            <button class="btn-ok" onclick="window.location.href='view_products.php'">View Inventory</button>
             <button class="btn-add-more" onclick="window.location.href='add_sale.php'">Add More Sale</button>
         </div>
     </div>

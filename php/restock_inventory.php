@@ -1,5 +1,13 @@
 <?php
 include('db_connection.php');
+session_start();
+
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id']; // The logged-in user
+} else {
+    header("Location: login.php");
+    exit();
+}
 
 // Check if an update was successful
 $update_success = isset($_GET['update']) && $_GET['update'] === 'success';

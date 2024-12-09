@@ -7,67 +7,47 @@ if (!isset($_SESSION['role'])) {
     exit;
 }
 
-if ($_SESSION['role'] !== 'Owner') {
-    echo "
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.createElement('div');
-            modal.innerHTML = `
-                <div style='
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, 0.5);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                '>
-                    <div style='
-                        background-color: white;
-                        padding: 20px 30px;
-                        border-radius: 10px;
-                        text-align: center;
-                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-                    '>
-                        <h2 style='color: #6a2e9d; font-family: Bahnschrift Condensed;'>Access Denied</h2>
-                        <p style='font-size: 16px; color: #333;'>Only the <strong>Owner</strong> can view permits.</p>
-                        <button onclick='window.location.href=\"dashboard.php\"' style='
-                            margin-top: 10px;
-                            padding: 10px 20px;
-                            background-color: #45a049;
-                            color: white;
-                            border: none;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-size: 16px;
-                        '>
-                            Return to Dashboard
-                        </button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        });
-    </script>
-    ";
-    exit;
-}
+$user_id = $_SESSION['user_id'];
+$role = $_SESSION['role'];
+
+// Check if filters are set
+$role_filter = isset($_POST['role']) ? $_POST['role'] : '';
+$start_date = isset($_POST['start_date']) ? $_POST['start_date'] : '';
+$end_date = isset($_POST['end_date']) ? $_POST['end_date'] : '';
+
+// Default transaction condition for the logged-in user
+$transaction_condition = ($role === 'Owner') ? "" : "WHERE t.user_id = '$user_id'";
+
 // Database connection
 include('db_connection.php');
 
-// Fetch transaction data, join products to get product name
-$sql = "SELECT t.transaction_id, t.product_id, t.transaction_type, t.quantity, t.total_amount, t.transaction_date, t.inserted_by, p.product_name
-        FROM transactions t
-        JOIN products p ON t.product_id = p.product_id
-        ORDER BY t.transaction_date DESC";
-$result = mysqli_query($conn, $sql);
+// Constructing the WHERE clause based on filter conditions
+$filter_conditions = [];
 
-// Check for errors in query
+if ($role_filter) {
+    $filter_conditions[] = "u.role = '$role_filter'";
+}
+
+if ($start_date && $end_date) {
+    $filter_conditions[] = "t.transaction_date BETWEEN '$start_date' AND '$end_date'";
+}
+
+if (!empty($filter_conditions)) {
+    $transaction_condition .= " AND " . implode(" AND ", $filter_conditions);
+}
+
+// Query to fetch transaction records based on filters
+$query = "SELECT t.transaction_id, p.product_name, t.transaction_type, t.quantity, t.total_amount, t.transaction_date, u.username AS inserted_by
+          FROM transactions t
+          JOIN products p ON t.product_id = p.product_id
+          JOIN users u ON t.user_id = u.user_id
+          $transaction_condition
+          ORDER BY t.transaction_date DESC";
+
+$result = mysqli_query($conn, $query);
+
 if (!$result) {
-    die("Error retrieving transactions: " . mysqli_error($conn));
+    die("Error fetching transactions: " . mysqli_error($conn));
 }
 ?>
 
@@ -143,11 +123,47 @@ if (!$result) {
             text-align: center;
             color: #6a2e9d;
         }
+
+        .filter-form {
+            text-align: center;
+            margin: 20px;
+        }
+        .filter-form input, .filter-form select {
+            padding: 8px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .filter-form button {
+            padding: 8px 16px;
+            background-color: #6a2e9d;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .filter-form button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
     <a href="dashboard.php" class="btn-dashboard">Return to Dashboard</a>
     <h1>Transaction Records</h1>
+
+    <!-- Filter Form -->
+    <form method="POST" class="filter-form">
+        <select name="role">
+            <option value="">--Select Role--</option>
+            <option value="Owner" <?= $role_filter === 'Owner' ? 'selected' : ''; ?>>Owner</option>
+            <option value="Assistant_1" <?= $role_filter === 'Assistant_1' ? 'selected' : ''; ?>>Assistant 1</option>
+            <option value="Assistant_2" <?= $role_filter === 'Assistant_2' ? 'selected' : ''; ?>>Assistant 2</option>
+        </select>
+
+        <input type="date" name="start_date" value="<?= $start_date; ?>" placeholder="Start Date">
+        <input type="date" name="end_date" value="<?= $end_date; ?>" placeholder="End Date">
+        
+        <button type="submit" class="btn-filter">Filter</button>
+        <a href="transaction.php" class="btn-filter">Clear Filter</a>
+    </form>
 
     <?php if (mysqli_num_rows($result) > 0): ?>
         <table class="transaction-table">
@@ -166,12 +182,12 @@ if (!$result) {
                 <?php while ($row = mysqli_fetch_assoc($result)): ?>
                     <tr>
                         <td><?= $row['transaction_id']; ?></td>
-                        <td><?= $row['product_name']; ?></td> <!-- Show product name -->
+                        <td><?= $row['product_name']; ?></td>
                         <td><?= ucfirst($row['transaction_type']); ?></td>
                         <td><?= $row['quantity']; ?></td>
                         <td><?= $row['total_amount']; ?></td>
                         <td><?= $row['transaction_date']; ?></td>
-                        <td><?= $row['inserted_by']; ?></td> <!-- Show inserted by -->
+                        <td><?= $row['inserted_by']; ?></td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>
@@ -185,3 +201,5 @@ if (!$result) {
     </div>
 </body>
 </html>
+
+<?php mysqli_close($conn); ?>
