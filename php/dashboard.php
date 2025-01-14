@@ -214,6 +214,18 @@ if ($result_sales_time->num_rows > 0) {
         <canvas id="salesProductChart"></canvas>
     </div>
 
+    <form action="pdf_report.php" method="GET">
+    <label for="start_date">Start Date:</label>
+    <input type="date" id="start_date" name="start_date" required>
+
+    <label for="end_date">End Date:</label>
+    <input type="date" id="end_date" name="end_date" required>
+
+    <button type="submit">Generate Report</button>
+    </form>
+
+
+
     <script>
         var ctxPermit = document.getElementById('permitChart').getContext('2d');
         var permitChart = new Chart(ctxPermit, {

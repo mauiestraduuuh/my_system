@@ -102,9 +102,28 @@
         .modal-content button:hover {
             background-color: #5c0e9f;
         }
+
+        .btn-dashboard {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background-color: #45a049;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-dashboard:hover {
+            background-color: #6a2e9d;
+        }
     </style>
 </head>
 <body>
+    <a href="dashboard.php" class="btn-dashboard">Return to Dashboard</a>
     <h1>Add Sale</h1>
     <div class="form-container">
         <form method="POST" action="add_sale_action.php" onsubmit="return validateSaleForm()">
@@ -144,7 +163,6 @@
             <button onclick="closeModal('errorModal')">OK</button>
         </div>
     </div>
-
     <script>
         function autocompleteProducts() {
             var query = document.getElementById('product_name').value;

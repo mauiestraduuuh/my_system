@@ -57,9 +57,27 @@ if (!isset($_SESSION['username'])) {
         .form-container button:hover {
             background-color: #5c0e9f; 
         }
+        .btn-dashboard {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background-color: #45a049;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-dashboard:hover {
+            background-color: #6a2e9d;
+        }
     </style>
 </head>
 <body>
+    <a href="dashboard.php" class="btn-dashboard">Return to Dashboard</a>
     <h1>Add Permit</h1>
 
     <div class="form-container">

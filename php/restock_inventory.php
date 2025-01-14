@@ -167,13 +167,30 @@ if (!$category_result) {
         .modal-content button:hover {
             background-color: #6a2e9d;
         }
+        .btn-prd {
+            position: absolute;
+            top: 75px;
+            right: 175px;
+            background-color: #45a049;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-prd:hover {
+            background-color: #6a2e9d;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Restock Products List by Category</h2>
         <a href="dashboard.php">Return to Dashboard</a><br><br>
-
+        <a href="add_product.php" class="btn-prd">Add Product</a>
         <?php if (mysqli_num_rows($category_result) > 0): ?>
             <?php while ($category_row = mysqli_fetch_assoc($category_result)): ?>
                 <h3><?= htmlspecialchars($category_row['category_name']) ?></h3>

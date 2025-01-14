@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
         $image_tmp_name = $_FILES['product_image']['tmp_name'];
         $image_name = basename($_FILES['product_image']['name']);
-        $image_path = 'images/' . $image_name;
+        $image_path = ''. $image_name;
 
         if (move_uploaded_file($image_tmp_name, "../" . $image_path)) {
             $product_image = $image_path;
