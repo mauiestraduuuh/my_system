@@ -214,15 +214,28 @@ if ($result_sales_time->num_rows > 0) {
         <canvas id="salesProductChart"></canvas>
     </div>
 
-    <form action="pdf_report.php" method="GET">
+    <form action="pdf_report.php" method="GET" style="text-align: center; margin-top: 20px;">
     <label for="start_date">Start Date:</label>
-    <input type="date" id="start_date" name="start_date" required>
+    <input type="date" id="start_date" name="start_date" required style="padding: 5px; margin: 10px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc;">
 
     <label for="end_date">End Date:</label>
-    <input type="date" id="end_date" name="end_date" required>
+    <input type="date" id="end_date" name="end_date" required style="padding: 5px; margin: 10px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc;">
 
-    <button type="submit">Generate Report</button>
-    </form>
+    <button type="submit" style="
+        margin: 10px;
+        padding: 10px 20px;
+        background-color: #6A0DAD;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-family: 'Bahnschrift', sans-serif;
+        cursor: pointer;
+    ">
+        Generate Report
+    </button>
+</form>
+
 
 
 
