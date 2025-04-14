@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $category_id = mysqli_real_escape_string($conn, $_POST['category']);
     $unit_price = mysqli_real_escape_string($conn, $_POST['unit_price']);
     $stock_quantity = mysqli_real_escape_string($conn, $_POST['stock_quantity']);
+    $minimum_stock = mysqli_real_escape_string($conn, $_POST['minimum_stock']);
     $product_image = null;
 
     // Handle image upload
@@ -30,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // Insert new product into the database
-    $insert_sql = "INSERT INTO products (product_name, category_id, default_price, stock_quantity, product_image) 
-                   VALUES ('$product_name', '$category_id', '$unit_price', '$stock_quantity', '$product_image')";
+    // Insert new product into the database with minimum_stock
+    $insert_sql = "INSERT INTO products (product_name, category_id, default_price, stock_quantity, product_image, minimum_stock) 
+                   VALUES ('$product_name', '$category_id', '$unit_price', '$stock_quantity', '$product_image', '$minimum_stock')";
     
     if (mysqli_query($conn, $insert_sql)) {
         header("Location: add_product.php?success=true");
@@ -170,6 +171,11 @@ mysqli_close($conn);
             <div class="form-group">
                 <label for="stock_quantity">Stock Quantity</label>
                 <input type="number" name="stock_quantity" id="stock_quantity" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="minimum_stock">Minimum Stock</label>
+                <input type="number" name="minimum_stock" id="minimum_stock" min="0" required>
             </div>
 
             <div class="form-group">

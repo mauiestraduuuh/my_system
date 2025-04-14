@@ -26,7 +26,6 @@ $row_inventory = $result_inventory->fetch_assoc();
 $inStock = $row_inventory['in_stock'] ?? 0;
 $outOfStock = $row_inventory['out_of_stock'] ?? 0;
 
-
 $sql_sales = "SELECT 
                 SUM(total_amount) AS total_sales,
                 product_name,
@@ -149,7 +148,6 @@ if ($result_sales_time->num_rows > 0) {
             padding: 5px;
             font-size: 1em;
         }
-
     </style>
 </head>
 <body>
@@ -163,6 +161,8 @@ if ($result_sales_time->num_rows > 0) {
         <a href="../php/add_sale.php" class="btn">Add Sale</a>
         <a href="../php/restock_inventory.php" class="btn">Restock</a>
         <a href="../php/transaction.php" class="btn">Transaction History</a>
+        <a href="../php/expenses.php" class="btn">Expenses</a>
+        <a href="../php/assistant_performance.php" class="btn">Assistant Performance</a>
         <a href="../php/logout.php" class="logout">Logout</a>
     </div>
 
@@ -190,19 +190,18 @@ if ($result_sales_time->num_rows > 0) {
         <select id="timeRange" onchange="updateSalesChart()">
             <option value="today">Today</option>
             <option value="week">Last 7 Days</option>
-            <option value="month">Last 30 Days</option>
+            <option value="month" selected>Last 30 Days</option>
             <option value="custom">Custom Date Range</option>
         </select>
     </div>
 
     <div id="customDates">
-    <label for="startDate">Start Date:</label>
-    <input type="date" id="startDate" name="startDate" required>
-    <label for="endDate">End Date:</label>
-    <input type="date" id="endDate" name="endDate" required>
-    <button type="button" onclick="applyCustomDateRange()">Apply</button>
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" name="startDate" required>
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" name="endDate" required>
+        <button type="button" onclick="applyCustomDateRange()">Apply</button>
     </div>
-
 
     <div class="chart-container">
         <h3>Sales Over Time (Last 30 Days)</h3>
@@ -215,29 +214,24 @@ if ($result_sales_time->num_rows > 0) {
     </div>
 
     <form action="pdf_report.php" method="GET" style="text-align: center; margin-top: 20px;">
-    <label for="start_date">Start Date:</label>
-    <input type="date" id="start_date" name="start_date" required style="padding: 5px; margin: 10px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc;">
-
-    <label for="end_date">End Date:</label>
-    <input type="date" id="end_date" name="end_date" required style="padding: 5px; margin: 10px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc;">
-
-    <button type="submit" style="
-        margin: 10px;
-        padding: 10px 20px;
-        background-color: #6A0DAD;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        font-family: 'Bahnschrift', sans-serif;
-        cursor: pointer;
-    ">
-        Generate Report
-    </button>
-</form>
-
-
-
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" required style="padding: 5px; margin: 10px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc;">
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" required style="padding: 5px; margin: 10px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc;">
+        <button type="submit" style="
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #6A0DAD;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: 'Bahnschrift', sans-serif;
+            cursor: pointer;
+        ">
+            Generate Report
+        </button>
+    </form>
 
     <script>
         var ctxPermit = document.getElementById('permitChart').getContext('2d');
@@ -271,19 +265,18 @@ if ($result_sales_time->num_rows > 0) {
         });
 
         var ctxSalesTime = document.getElementById('salesTimeChart').getContext('2d');
-var salesTimeChart = new Chart(ctxSalesTime, {
-    type: 'line',
-    data: {
-        labels: <?php echo json_encode($daily_sales_dates); ?>,
-        datasets: [{
-            label: 'Daily Sales',
-            data: <?php echo json_encode($daily_sales); ?>,
-            borderColor: '#6A0DAD',
-            fill: false
-        }]
-    }
-});
-
+        var salesTimeChart = new Chart(ctxSalesTime, {
+            type: 'line',
+            data: {
+                labels: <?php echo json_encode($daily_sales_dates); ?>,
+                datasets: [{
+                    label: 'Daily Sales',
+                    data: <?php echo json_encode($daily_sales); ?>,
+                    borderColor: '#6A0DAD',
+                    fill: false
+                }]
+            }
+        });
 
         var ctxSalesProduct = document.getElementById('salesProductChart').getContext('2d');
         var salesProductChart = new Chart(ctxSalesProduct, {
@@ -299,58 +292,37 @@ var salesTimeChart = new Chart(ctxSalesTime, {
         });
 
         function updateSalesChart() {
-    var timeRange = document.getElementById('timeRange').value;
-    var customDates = document.getElementById('customDates');
+            var timeRange = document.getElementById('timeRange').value;
+            var customDates = document.getElementById('customDates');
 
-    if (timeRange === 'custom') {
-        customDates.style.display = 'block';
-    } else {
-        customDates.style.display = 'none';
-        // Handle predefined ranges (e.g., Today, Last 7 Days, Last 30 Days)
-        fetch(`get_sales_data.php?time_range=${timeRange}`)
-            .then(response => response.json())
-            .then(data => {
-                salesTimeChart.data.labels = data.dates;
-                salesTimeChart.data.datasets[0].data = data.sales;
-                salesTimeChart.update();
-            })
-            .catch(error => console.error('Error fetching data:', error));
-    }
-}
-
-function applyCustomDateRange() {
-    var startDate = document.getElementById('startDate').value;
-    var endDate = document.getElementById('endDate').value;
-
-    if (!startDate || !endDate) {
-        alert('Please select both start and end dates.');
-        return;
-    }
-
-    fetch(`get_sales_data.php?start_date=${startDate}&end_date=${endDate}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-                return;
+            if (timeRange === 'custom') {
+                customDates.style.display = 'block';
+            } else {
+                customDates.style.display = 'none';
+                fetch(`get_sales_data.php?time_range=${timeRange}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        salesTimeChart.data.labels = data.dates;
+                        salesTimeChart.data.datasets[0].data = data.sales;
+                        salesTimeChart.update();
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
             }
+        }
 
-            salesTimeChart.data.labels = data.dates;
-            salesTimeChart.data.datasets[0].data = data.sales;
-            salesTimeChart.update();
-        })
-        .catch(error => console.error('Error fetching custom date range data:', error));
-}
+        function applyCustomDateRange() {
+            var startDate = document.getElementById('startDate').value;
+            var endDate = document.getElementById('endDate').value;
 
-window.onload = function () {
-    var today = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').value = today;
-    document.getElementById('endDate').value = today;
-
-    // Ensure custom dates are hidden initially
-    document.getElementById('customDates').style.display = 'none';
-};
-
+            fetch(`get_sales_data.php?start_date=${startDate}&end_date=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    salesTimeChart.data.labels = data.dates;
+                    salesTimeChart.data.datasets[0].data = data.sales;
+                    salesTimeChart.update();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
     </script>
 </body>
 </html>

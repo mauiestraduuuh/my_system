@@ -120,9 +120,8 @@ if (!$category_result) {
             border-radius: 4px;
         }
 
-        /* Modal styles */
         .modal {
-            display: none; /* Default hidden */
+            display: none;
             position: fixed;
             z-index: 1000;
             top: 0;
@@ -167,6 +166,7 @@ if (!$category_result) {
         .modal-content button:hover {
             background-color: #6a2e9d;
         }
+
         .btn-prd {
             position: absolute;
             top: 75px;
@@ -183,6 +183,14 @@ if (!$category_result) {
 
         .btn-prd:hover {
             background-color: #6a2e9d;
+        }
+
+        .low-stock {
+            background-color: #fff3cd; /* light yellow */
+        }
+
+        .out-of-stock {
+            background-color: #f8d7da; /* light red */
         }
     </style>
 </head>
@@ -220,10 +228,21 @@ if (!$category_result) {
                                 $product_name = htmlspecialchars($product_row['product_name']);
                                 $unit_price = $product_row['default_price'];
                                 $stock_quantity = $product_row['stock_quantity'];
+                                $minimum_stock = $product_row['minimum_stock'];
                                 $image_path = $product_row['product_image'];
                                 $product_image = $image_path ? "<img src='../images/$image_path' alt='$product_name'>" : "No Image";
+
+                                $stock_status_class = '';
+                                $stock_note = '';
+                                if ($stock_quantity == 0) {
+                                    $stock_status_class = 'out-of-stock';
+                                    $stock_note = 'Out of Stock!';
+                                } elseif ($stock_quantity < $minimum_stock) {
+                                    $stock_status_class = 'low-stock';
+                                    $stock_note = 'Low Stock!';
+                                }
                         ?>
-                            <tr>
+                            <tr class="<?= $stock_status_class ?>">
                                 <td><?= $product_id ?></td>
                                 <td class="tooltip">
                                     <?= $product_name ?>
@@ -238,6 +257,9 @@ if (!$category_result) {
                                 </td>
                                 <td>
                                     <span id="quantity-<?= $product_id ?>"><?= $stock_quantity ?></span>
+                                    <?php if ($stock_note): ?>
+                                        <span style="color: red; font-weight: bold;"> - <?= $stock_note ?></span>
+                                    <?php endif; ?>
                                 </td>
                                 <td><a href="update_product.php?product_id=<?= $product_id ?>">Update</a></td>
                             </tr>
@@ -265,14 +287,13 @@ if (!$category_result) {
     </div>
 
     <script>
-        // Show modal if update was successful
         const updateSuccess = <?php echo json_encode($update_success); ?>;
         if (updateSuccess) {
             document.getElementById('successModal').style.display = 'flex';
         }
 
         function redirectToProducts() {
-            window.location.href = 'view_products.php'; // Replace with the correct products list URL
+            window.location.href = 'view_products.php';
         }
     </script>
 </body>
