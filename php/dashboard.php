@@ -6,6 +6,7 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
+// Get permit status
 $sql = "SELECT 
             SUM(CASE WHEN expiry_date > CURDATE() THEN 1 ELSE 0 END) AS active,
             SUM(CASE WHEN expiry_date <= CURDATE() AND expiry_date > DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS expiring_soon,
@@ -17,6 +18,7 @@ $active = $row['active'];
 $expiringSoon = $row['expiring_soon'];
 $expired = $row['expired'];
 
+// Get inventory status
 $sql_inventory = "SELECT 
                     SUM(CASE WHEN stock_quantity > 0 THEN 1 ELSE 0 END) AS in_stock,
                     SUM(CASE WHEN stock_quantity = 0 THEN 1 ELSE 0 END) AS out_of_stock
@@ -26,6 +28,7 @@ $row_inventory = $result_inventory->fetch_assoc();
 $inStock = $row_inventory['in_stock'] ?? 0;
 $outOfStock = $row_inventory['out_of_stock'] ?? 0;
 
+// Get sales data
 $sql_sales = "SELECT 
                 SUM(total_amount) AS total_sales,
                 product_name,
@@ -47,6 +50,16 @@ if ($result_sales->num_rows > 0) {
     }
 }
 
+// Get total expenses
+$sql_expenses = "SELECT SUM(amount) AS total_expenses FROM expenses";
+$result_expenses = $conn->query($sql_expenses);
+$row_expenses = $result_expenses->fetch_assoc();
+$total_expenses = $row_expenses['total_expenses'] ?? 0;
+
+// Calculate net profit
+$net_profit = $total_sales - $total_expenses;
+
+// Get sales data for the last 30 days
 $sql_sales_time = "SELECT 
                     DATE(sales_date) AS date, 
                     SUM(total_amount) AS daily_sales
@@ -78,57 +91,52 @@ if ($result_sales_time->num_rows > 0) {
         body {
             font-family: 'Bahnschrift', sans-serif;
         }
-
         canvas {
             max-width: 600px;
             margin: 10px auto;
         }
-
         .dashboard-buttons {
-            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
             margin-bottom: 20px;
         }
-
         .dashboard-buttons a {
-            margin: 10px;
+            flex: 1 1 200px;
+            max-width: 200px;
             padding: 10px;
+            text-align: center;
             text-decoration: none;
             color: white;
             background-color: #6A0DAD;
             border-radius: 5px;
             font-size: 16px;
         }
-
         .dashboard-buttons a.logout {
             background-color: #f44336;
         }
-
         .chart-container {
             text-align: center;
             margin-bottom: 40px;
         }
-
         .chart-container h3 {
             font-size: 1.5em;
             color: #6A0DAD;
             margin-bottom: 10px;
         }
-
         .indicator-container {
             display: flex;
             justify-content: space-around;
             margin-bottom: 10px;
         }
-
         .indicator-container div {
             font-size: 1.1em;
             color: #4CAF50;
         }
-
         .indicator-container .expired {
             color: #F44336;
         }
-
         h1 {
             text-align: center;
             font-family: 'Bahnschrift', sans-serif;
@@ -136,13 +144,11 @@ if ($result_sales_time->num_rows > 0) {
             color: #6A0DAD;
             margin-bottom: 20px;
         }
-
         #customDates {
             display: none;
             text-align: center;
             margin-top: 10px;
         }
-
         #customDates input {
             margin: 5px;
             padding: 5px;
@@ -163,6 +169,10 @@ if ($result_sales_time->num_rows > 0) {
         <a href="../php/transaction.php" class="btn">Transaction History</a>
         <a href="../php/expenses.php" class="btn">Expenses</a>
         <a href="../php/assistant_performance.php" class="btn">Assistant Performance</a>
+        <a href="../php/add_customer.php" class="btn">Add Customer</a>
+        <a href="../php/add_utang.php" class="btn">Add Utang</a>
+        <a href="../php/utang.php" class="btn">Pay Utang</a>
+        <a href="../php/utang_history.php" class="btn">Utang History</a>
         <a href="../php/logout.php" class="logout">Logout</a>
     </div>
 
@@ -211,6 +221,13 @@ if ($result_sales_time->num_rows > 0) {
     <div class="chart-container">
         <h3>Best Selling Products</h3>
         <canvas id="salesProductChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h3>Net Profit</h3>
+        <div>Total Sales: ₱<?php echo number_format($total_sales, 2); ?></div>
+        <div>Total Expenses: ₱<?php echo number_format($total_expenses, 2); ?></div>
+        <div><strong>Net Profit: ₱<?php echo number_format($net_profit, 2); ?></strong></div>
     </div>
 
     <form action="pdf_report.php" method="GET" style="text-align: center; margin-top: 20px;">
@@ -270,10 +287,12 @@ if ($result_sales_time->num_rows > 0) {
             data: {
                 labels: <?php echo json_encode($daily_sales_dates); ?>,
                 datasets: [{
-                    label: 'Daily Sales',
+                    label: 'Sales',
                     data: <?php echo json_encode($daily_sales); ?>,
-                    borderColor: '#6A0DAD',
-                    fill: false
+                    borderColor: '#FF9800',
+                    backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                    fill: true,
+                    borderWidth: 2
                 }]
             }
         });
@@ -286,42 +305,29 @@ if ($result_sales_time->num_rows > 0) {
                 datasets: [{
                     label: 'Best Selling Products',
                     data: <?php echo json_encode($product_sales); ?>,
-                    backgroundColor: '#6A0DAD'
+                    backgroundColor: '#4CAF50',
+                    borderColor: '#388E3C',
+                    borderWidth: 1
                 }]
             }
         });
 
         function updateSalesChart() {
             var timeRange = document.getElementById('timeRange').value;
-            var customDates = document.getElementById('customDates');
-
             if (timeRange === 'custom') {
-                customDates.style.display = 'block';
+                document.getElementById('customDates').style.display = 'block';
             } else {
-                customDates.style.display = 'none';
-                fetch(`get_sales_data.php?time_range=${timeRange}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        salesTimeChart.data.labels = data.dates;
-                        salesTimeChart.data.datasets[0].data = data.sales;
-                        salesTimeChart.update();
-                    })
-                    .catch(error => console.error('Error fetching data:', error));
+                document.getElementById('customDates').style.display = 'none';
+                // Implement logic to update chart based on the selected time range (today, week, month)
             }
         }
 
         function applyCustomDateRange() {
             var startDate = document.getElementById('startDate').value;
             var endDate = document.getElementById('endDate').value;
-
-            fetch(`get_sales_data.php?start_date=${startDate}&end_date=${endDate}`)
-                .then(response => response.json())
-                .then(data => {
-                    salesTimeChart.data.labels = data.dates;
-                    salesTimeChart.data.datasets[0].data = data.sales;
-                    salesTimeChart.update();
-                })
-                .catch(error => console.error('Error fetching data:', error));
+            if (startDate && endDate) {
+                // Apply custom date range and update chart
+            }
         }
     </script>
 </body>

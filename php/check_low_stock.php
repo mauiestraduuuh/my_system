@@ -13,8 +13,8 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch low stock items
-$sql = "SELECT product_name, stock_quantity, minimum_stock FROM products WHERE stock_quantity < minimum_stock";
+// Fetch low stock items with stock_quantity ≤ 5
+$sql = "SELECT product_name, stock_quantity FROM products WHERE stock_quantity <= 5";
 $result = $conn->query($sql);
 
 $lowStockItems = [];
@@ -28,7 +28,7 @@ if (count($lowStockItems) > 0) {
 
     foreach ($lowStockItems as $item) {
         $body .= "<li><strong>" . htmlspecialchars($item['product_name']) . "</strong> — Qty: " . 
-                 (int)$item['stock_quantity'] . " | Min: " . (int)$item['minimum_stock'] . "</li>";
+                 (int)$item['stock_quantity'] . "</li>";
     }
 
     $body .= "</ul>";
@@ -36,7 +36,6 @@ if (count($lowStockItems) > 0) {
     // Send Email
     $mail = new PHPMailer(true);
     try {
-        // Server settings
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -45,11 +44,9 @@ if (count($lowStockItems) > 0) {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = 465;
 
-        // Recipients
         $mail->setFrom('maureen2220lucky@gmail.com', 'maureen');
         $mail->addAddress('maureen.estrada@tup.edu.ph', 'wilma');
 
-        // Content
         $mail->isHTML(true);
         $mail->Subject = 'Low Stock Alert';
         $mail->Body    = $body;
